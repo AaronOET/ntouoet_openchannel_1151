@@ -13,10 +13,10 @@ GEOM_SLIDERS = {
     's': ('Side slope s (H:1V)', 0.0, 5.0, 0.1),
     'd0': ('Diameter d0 (m)', 0.2, 5.0, 0.05),
 }
-# Shape-specific overrides of GEOM_SLIDERS and the discharge range (min, max, step)
+# Shape-specific overrides of GEOM_SLIDERS and the discharge input step
 SHAPE_SLIDERS = {Triangle: {'s': ('Side slope s (H:1V)', 0.1, 5.0, 0.1)}}
-Q_RANGE = {Circle: (0.05, 30.0, 0.05)}
-Q_RANGE_DEFAULT = (1.0, 500.0, 1.0)
+Q_STEP = {Circle: 0.05}
+Q_STEP_DEFAULT = 1.0
 
 
 def annotate_dimensions(ax, sec, yn, hb):
@@ -128,9 +128,11 @@ def channel_widget(sec, s0=0.001, mn=0.020, Q=40.0):
     w_mn = widgets.FloatSlider(value=mn, min=0.010, max=0.080, step=0.001,
                                readout_format='.3f',
                                description="Manning's n", style=style, layout=layout)
-    qmin, qmax, qstep = Q_RANGE.get(shape, Q_RANGE_DEFAULT)
-    w_Q = widgets.FloatSlider(value=Q, min=qmin, max=qmax, step=qstep,
-                              description='Discharge Q (m³/s)', style=style, layout=layout)
+    # Typed-in discharge; must stay positive for the depth solvers
+    w_Q = widgets.BoundedFloatText(value=Q, min=1e-6, max=1e6,
+                                   step=Q_STEP.get(shape, Q_STEP_DEFAULT),
+                                   description='Discharge Q (m³/s)', style=style,
+                                   layout=widgets.Layout(width='300px'))
 
     def update(s0, mn, Q, **values):
         plot_section(shape(**values), s0, mn, Q)
